@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+body {
+    background-color: #1a1b1d; /* Tailwind's gray-200 */
+}
+
+#content::-webkit-scrollbar {
+    width: 16px;
+}
+
+#content::-webkit-scrollbar-track {
+    -webkit-border-radius: 10px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.5);
+    margin-left: 20px;
+}
+
+#content::-webkit-scrollbar-thumb {
+   -webkit-border-radius: 10px;
+   border-radius: 10px;
+   background: #ADADAD80;
+}
+
+#content::-webkit-scrollbar-thumb:window-inactive {
+    background: #ADADAD80;
+}
+
+/* Estilos para lobbies cheias */
+.lobby-full {
+    opacity: 0.8;
+    border: 2px solid #6b7280 !important;
+    background: linear-gradient(135deg, #374151, #4b5563) !important;
+}
+
+.lobby-full:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.lobby-card {
+    transition: all 0.3s ease;
+}
+
+.lobby-card:not(.lobby-full):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+/* Destacar lobbies featured mesmo quando cheias */
+.lobby-card.featured.lobby-full {
+    border: 2px solid #f59e0b !important;
+    background: linear-gradient(135deg, #d97706, #f59e0b) !important;
+    opacity: 0.9;
+}

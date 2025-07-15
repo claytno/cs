@@ -1,0 +1,33 @@
+{% extends 'base.html.twig' %}
+{% block body %}
+<div class="grid grid-cols-4 w-full gap-6">
+    <div class="overflow-y-auto rounded-lg p-4 h-64 shadow-md border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700">
+        <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Perfil do Usuário</h3>
+        {% if app.user %}
+            {% if app.user.isSteamUser %}
+                {% include 'components/SteamProfile.html.twig' with {'user': app.user} %}
+            {% else %}
+                <div class="flex items-center space-x-3">
+                    <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
+                        <span class="text-white font-semibold">{{ app.user.email|slice(0,1)|upper }}</span>
+                    </div>
+                    <div>
+                        <p class="font-medium text-gray-900 dark:text-white">{{ app.user.email }}</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Usuário padrão</p>
+                    </div>
+                </div>
+            {% endif %}
+        {% endif %}
+    </div>
+    <div class="overflow-y-auto rounded-lg p-4 h-64 shadow-md border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700"></div>
+    <div class="overflow-y-auto rounded-lg p-4 h-64 shadow-md border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700"></div>
+    <div class="overflow-y-auto rounded-lg p-4 h-64 shadow-md border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700"></div>
+    <div class="overflow-y-auto rounded-lg p-4 h-64 shadow-md border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700 col-span-4"></div>
+    <div class="overflow-y-auto rounded-lg p-4 h-64 shadow-md border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700"></div>
+    <div class="overflow-y-auto rounded-lg p-4 h-64 shadow-md border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700"></div>
+    <div class="overflow-y-auto rounded-lg p-4 h-64 shadow-md border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700"></div>
+    <div class="overflow-y-auto rounded-lg p-4 h-64 shadow-md border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700"></div>
+    <div class="overflow-y-auto rounded-lg p-4 h-64 shadow-md border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700 col-span-2"></div>
+    <div class="overflow-y-auto rounded-lg p-4 h-64 shadow-md border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700 col-span-2"></div>
+</div>
+{% endblock %}

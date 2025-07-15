@@ -1,0 +1,34 @@
+{% extends 'public.html.twig' %}
+
+{% block title %}Register{% endblock %}
+
+{% block body %}
+    <div tabindex="-1" data-modal-target="modal" data-action="modal#close" class="fixed top-0 left-0 right-0 flex p-4 overflow-x-hidden overflow-y-auto md:inset-0 max-h-full justify-center items-center">
+        <div class="relative w-full max-w-md max-h-full z-50">
+            <!-- Modal content -->
+            <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
+                <div class="px-6 py-6 lg:px-8">
+                    <h3 class="mb-4 text-xl font-medium text-gray-900 dark:text-white">Registrarse</h3>
+
+                    {% for flash_error in app.flashes('verify_email_error') %}
+                        <twig:Alert type="error" message="{{ flash_error }}" />
+                    {% endfor %}
+                    {{ form_errors(registrationForm) }}
+                    {{ form_start(registrationForm, {'attr': {'class': 'space-y-6!'}}) }}
+                        {{ form_row(registrationForm.email) }}
+                        {{ form_row(registrationForm.plainPassword, {
+                            label: 'Password'
+                        }) }}
+                        {{ form_row(registrationForm.agreeTerms) }}
+
+                        <button type="submit" class="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Crear cuenta</button>
+                    {{ form_end(registrationForm) }}
+                    
+                        <div class="text-sm font-medium text-gray-500 dark:text-gray-300">
+                            Ya tienes cuenta? <a href="{{ path('app_login') }}" class="text-blue-700 hover:underline dark:text-blue-500">Inicia sesión</a>
+                        </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

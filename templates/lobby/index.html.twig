@@ -1,0 +1,574 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Sistema de Lobbies{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .lobby-card {
+            transition: all 0.3s ease;
+            background: #2c2f3b;
+            border: 2px solid transparent;
+        }
+        .lobby-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.2);
+            border-color: #3b82f6;
+        }
+        .lobby-card.featured {
+            background: #403333;
+            border-color: #fb923c;
+        }
+        .lobby-card.full {
+            background: #374151;
+        }
+        .player-slot {
+            transition: all 0.3s ease;
+        }
+        .player-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 2px solid #4b5563;
+            position: relative;
+        }
+        .player-level-badge {
+            width: 16px;
+            height: 16px;
+            border-radius: 2px;
+            font-size: 10px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .verified-badge {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            width: 16px;
+            height: 16px;
+            background: #3b82f6;
+            border-radius: 50%;
+            border: 2px solid #2c2f3b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .level-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #3b82f6;
+            background: #2c2f3b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .level-circle.featured {
+            border-color: #fb923c;
+        }
+        .brazil-flag {
+            background: linear-gradient(to bottom, #009c3b 0%, #009c3b 33%, #ffdf00 33%, #ffdf00 66%, #002776 66%);
+            width: 24px;
+            height: 16px;
+            border-radius: 2px;
+        }
+        .skill-slider {
+            position: relative;
+            height: 4px;
+            background: #4b5563;
+            border-radius: 9999px;
+        }
+        .skill-progress {
+            height: 100%;
+            background: #3b82f6;
+            border-radius: 9999px;
+        }
+        .skill-thumb {
+            position: absolute;
+            top: 50%;
+            width: 20px;
+            height: 20px;
+            background: #3b82f6;
+            border: 2px solid white;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .challenge-mode {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="min-h-screen bg-[#1e1f22] text-white">
+    <!-- Header -->
+    <div class="bg-gray-800 border-b border-gray-700 shadow-lg">
+        <div class="px-6 py-4">
+            <!-- Barra superior com filtros e controles -->
+            <div class="flex flex-col lg:flex-row items-center justify-between gap-4 mb-4">
+                <div class="flex flex-wrap items-center gap-4 lg:gap-6">
+                    <div class="flex items-center gap-2">
+                        <label class="text-sm font-semibold text-gray-400">SKILL LEVEL</label>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="w-32">
+                        <div class="skill-slider">
+                            <div class="skill-progress" style="width: 50%;"></div>
+                            <div class="skill-thumb" style="left: 50%;"></div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm font-bold">Lobbies</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm font-semibold text-gray-400">Jogadores</span>
+                        <span class="bg-gray-700 text-xs font-bold py-1 px-2 rounded">{{ availableLobbies|length * 5 }}</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 lg:gap-4">
+                    <button class="flex items-center gap-2 text-sm font-semibold text-gray-400 hover:text-white transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                        </svg>
+                        FILTROS (0)
+                    </button>
+                    <button id="refreshBtn" class="bg-gray-800 text-white font-bold py-2 px-4 rounded-md flex items-center gap-2 hover:bg-gray-700 transition">
+                        <i class="fas fa-sync-alt"></i>
+                        ATUALIZAR
+                    </button>
+                    <button class="bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 transition">INÍCIO RÁPIDO</button>
+                    <button id="createLobbyBtn" class="bg-orange-500 text-white font-bold py-2 px-4 rounded-md hover:bg-orange-600 transition">CRIAR LOBBY</button>
+                </div>
+            </div>
+            
+            <!-- Info do usuário -->
+            <div class="flex items-center justify-between">
+                <h1 class="text-2xl font-bold text-white">
+                    <i class="fas fa-gamepad mr-2"></i>Sistema de Lobbies
+                </h1>
+                <div class="flex items-center space-x-4">
+                    {% if user.steamAvatar %}
+                        <img src="{{ user.steamAvatar }}" alt="Avatar" class="w-10 h-10 rounded-full border-2 border-gray-600">
+                    {% endif %}
+                    <span class="text-gray-300">{{ user.displayName }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="px-6 py-8">
+        {% if not userLobby %}
+            <!-- Estado: Sem Lobby - Mostrar Grid de Lobbies DISPONÍVEIS (incompletas) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+                {% for lobby in availableLobbies %}
+                    {% set isFullLobby = lobby.playerCount == 5 %}
+                    {% set isFeatured = loop.index == 1 and lobby.playerCount >= 4 %}
+                    <div class="lobby-card {{ isFeatured ? 'featured' : '' }} rounded-lg p-4 flex flex-col gap-4 relative cursor-pointer"
+                         onclick="lobbySystem.joinLobby({{ lobby.id }})">
+                        
+                        {% if isFeatured %}
+                            <div class="absolute top-2 right-2 text-orange-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                </svg>
+                            </div>
+                        {% endif %}
+
+                        <!-- Header da Lobby -->
+                        <div class="flex items-start justify-between">
+                            <!-- Bandeira do Brasil -->
+                            <div class="brazil-flag"></div>
+                            
+                            <!-- Centro: Nível e Nome da Lobby -->
+                            <div class="flex flex-col items-center -mt-2">
+                                <div class="level-circle {{ isFeatured ? 'featured' : '' }}">
+                                    {{ random(8, 15) }}
+                                </div>
+                                <h3 class="font-bold text-lg mt-1 text-center">{{ lobby.name }}</h3>
+                            </div>
+                            
+                            <!-- Espaço para simetria -->
+                            <div class="w-6 h-4"></div>
+                        </div>
+
+                        <!-- Avatares dos Jogadores -->
+                        <div class="flex justify-center gap-3">
+                            {% set players = lobby.players.toArray %}
+                            {% for i in 0..4 %}
+                                {% set player = players[i] ?? null %}
+                                <div class="flex flex-col items-center gap-1">
+                                    <div class="relative">
+                                        {% if player %}
+                                            <img src="{{ player.user.steamAvatar ?: '/images/default-avatar.svg' }}" 
+                                                 alt="Player Avatar" 
+                                                 class="player-avatar">
+                                            {% if player.user.id is odd %}
+                                                <div class="verified-badge">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                                    </svg>
+                                                </div>
+                                            {% endif %}
+                                            {% if player.isLeader %}
+                                                <span class="absolute -top-1 -left-1 bg-red-600 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-[#2c2f3b]">
+                                                    {{ random(15, 20) }}
+                                                </span>
+                                            {% endif %}
+                                        {% else %}
+                                            <div class="player-avatar bg-gray-700 flex items-center justify-center">
+                                                <i class="fas fa-user text-gray-500"></i>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex items-center gap-1">
+                                        {% if player %}
+                                            {% set colors = ['#e0bb6c', '#a18b5b', '#7f7f7f', '#5d8aa8', '#ff6347', '#8a2be2'] %}
+                                            {% set letters = ['G', 'S', 'D', 'H', 'M', 'E'] %}
+                                            {% set randomIndex = random(0, 5) %}
+                                            <div class="player-level-badge" style="background-color: {{ colors[randomIndex] }};">
+                                                {{ letters[randomIndex] }}
+                                            </div>
+                                            <span class="text-xs font-semibold">{{ random(5, 20) }}</span>
+                                        {% else %}
+                                            <div class="player-level-badge bg-gray-600">-</div>
+                                            <span class="text-xs font-semibold text-gray-500">-</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Linha separadora -->
+                        <div class="border-t border-gray-700 w-full my-1"></div>
+
+                        <!-- Botão de ação -->
+                        {% if isFullLobby %}
+                            <button class="bg-gray-600 text-white w-full py-2 rounded-lg font-semibold flex items-center justify-center gap-2 cursor-not-allowed" disabled>
+                                <i class="fas fa-lock"></i>
+                                Lobby Cheia ({{ lobby.playerCount }}/5)
+                            </button>
+                        {% else %}
+                            <button class="bg-blue-600 hover:bg-blue-700 text-white w-full py-2 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors">
+                                <i class="fas fa-sign-in-alt"></i>
+                                Entrar ({{ lobby.playerCount }}/5)
+                            </button>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div class="col-span-full text-center py-12">
+                        <i class="fas fa-search text-6xl text-gray-600 mb-4"></i>
+                        <h3 class="text-xl font-bold text-gray-400 mb-2">Nenhuma Lobby Disponível</h3>
+                        <p class="text-gray-500">Seja o primeiro a criar uma lobby!</p>
+                    </div>
+                {% endfor %}
+            </div>
+
+        {% else %}
+            <!-- Estado: Com Lobby - Mostrar Lobby Central -->
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                <!-- Área Central - Lobby Ativa -->
+                <div class="lg:col-span-3">
+                    <div class="bg-gray-800 border border-gray-700 rounded-lg p-8 shadow-lg">
+                        <div class="text-center mb-8">
+                            <h2 class="text-3xl font-bold text-white mb-2">{{ userLobby.name }}</h2>
+                            <p class="text-gray-400">
+                                {% if userLobby.isFull %}
+                                    Lobby completa - Pronto para desafiar!
+                                {% else %}
+                                    Aguardando jogadores ({{ userLobby.playerCount }}/5)
+                                {% endif %}
+                            </p>
+                        </div>
+                        
+                        <!-- Slots dos Jogadores -->
+                        <div class="flex justify-center items-center space-x-8 mb-8">
+                            {% set playersList = userLobby.players.toArray %}
+                            {% for i in 0..4 %}
+                                {% set player = playersList[i] ?? null %}
+                                <div class="player-slot text-center">
+                                    {% if player %}
+                                        <div class="relative">
+                                            <img src="{{ player.user.steamAvatar ?: '/images/default-avatar.svg' }}" 
+                                                 alt="{{ player.user.displayName }}" 
+                                                 class="w-20 h-20 rounded-full border-4 {{ player.isLeader ? 'border-yellow-500' : 'border-blue-500' }} mx-auto">
+                                            {% if player.isLeader %}
+                                                <div class="leader-crown">
+                                                    <i class="fas fa-crown text-white"></i>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <p class="text-sm text-white mt-2 font-semibold">{{ player.user.displayName }}</p>
+                                        <p class="text-xs text-gray-400">{{ player.isLeader ? 'Líder' : 'Jogador' }}</p>
+                                    {% else %}
+                                        <div class="empty-slot">
+                                            <div class="w-20 h-20 bg-gray-700 rounded-full border-4 border-gray-600 flex items-center justify-center mx-auto">
+                                                <i class="fas fa-user text-gray-500 text-2xl"></i>
+                                            </div>
+                                            <p class="text-xs text-gray-500 mt-2">Aguardando...</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Ações da Lobby -->
+                        <div class="text-center">
+                            {% if userLobby.isFull and userLobbyPlayer and userLobbyPlayer.isLeader %}
+                                <p class="text-green-400 mb-4">
+                                    <i class="fas fa-check-circle mr-2"></i>Lobby completa! Você pode desafiar outras lobbies.
+                                </p>
+                            {% endif %}
+                            
+                            <!-- Mostrar desafio pendente se houver -->
+                            {% if pendingChallenge %}
+                                <div class="bg-yellow-900 border border-yellow-600 rounded-lg p-4 mb-4">
+                                    <h4 class="text-yellow-300 font-bold mb-2">
+                                        <i class="fas fa-exclamation-triangle mr-2"></i>Desafio Recebido!
+                                    </h4>
+                                    <p class="text-yellow-100 mb-3">
+                                        A lobby <strong>{{ pendingChallenge.lobbyA.name }}</strong> desafiou sua equipe!
+                                    </p>
+                                    <div class="flex justify-center gap-3">
+                                        <button onclick="matchSystem.acceptChallenge({{ pendingChallenge.id }})" 
+                                                class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
+                                            <i class="fas fa-check mr-2"></i>Aceitar
+                                        </button>
+                                        <button onclick="matchSystem.declineChallenge({{ pendingChallenge.id }})" 
+                                                class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors">
+                                            <i class="fas fa-times mr-2"></i>Recusar
+                                        </button>
+                                    </div>
+                                </div>
+                            {% endif %}
+                            
+                            <!-- Mostrar status da partida ativa se houver -->
+                            {% if activeMatch %}
+                                <div class="bg-blue-900 border border-blue-600 rounded-lg p-4 mb-4">
+                                    {% if activeMatch.stage == 'waiting' %}
+                                        <h4 class="text-blue-300 font-bold mb-2">
+                                            <i class="fas fa-clock mr-2"></i>Aguardando Resposta
+                                        </h4>
+                                        <p class="text-blue-100 mb-3">
+                                            Aguardando a lobby <strong>{{ activeMatch.lobbyB.name }}</strong> aceitar o desafio...
+                                        </p>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                            
+                            <button id="leaveLobbyBtn" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors mr-4">
+                                <i class="fas fa-sign-out-alt mr-2"></i>
+                                {% if userLobbyPlayer and userLobbyPlayer.isLeader %}Fechar Lobby{% else %}Sair da Lobby{% endif %}
+                            </button>
+                            
+                            {% if not userLobby.isFull %}
+                                <button onclick="navigator.clipboard.writeText(window.location.href)" 
+                                        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors">
+                                    <i class="fas fa-link mr-2"></i>Copiar Link
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="lg:col-span-1">
+                    <div class="bg-gray-800 rounded-lg border border-gray-700 p-6 shadow-lg">
+                        <h3 class="text-xl font-bold mb-6 text-gray-100">
+                            {% if isInFullLobby and userLobbyPlayer and userLobbyPlayer.isLeader %}
+                                <i class="fas fa-trophy mr-2 text-yellow-500"></i>Lobbies para Desafiar
+                            {% else %}
+                                <i class="fas fa-clock mr-2"></i>Aguardando Jogadores
+                            {% endif %}
+                        </h3>
+                        
+                        <div id="sidebarLobbies">
+                            {% if isInFullLobby and userLobbyPlayer and userLobbyPlayer.isLeader %}
+                                <!-- Só mostra lobbies para desafiar se estiver em lobby completa E for líder -->
+                                {% if availableLobbies|length > 0 %}
+                                    <div class="space-y-3">
+                                        {% for lobby in availableLobbies %}
+                                            <div class="lobby-card rounded-lg p-3 cursor-pointer challenge-mode" 
+                                                 onclick="lobbySystem.challengeLobby({{ lobby.id }})">
+                                                <div class="flex items-center justify-between mb-2">
+                                                    <div class="flex items-center gap-2">
+                                                        <div class="brazil-flag"></div>
+                                                        <div class="level-circle" style="width: 24px; height: 24px; font-size: 12px;">
+                                                            {{ random(8, 15) }}
+                                                        </div>
+                                                    </div>
+                                                    <div class="text-right">
+                                                        <span class="bg-blue-600 text-white px-2 py-1 rounded text-xs">
+                                                            5/5
+                                                        </span>
+                                                        <div class="text-red-400 mt-1">
+                                                            <i class="fas fa-sword text-xs"></i>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <h4 class="font-semibold text-white text-sm mb-1">{{ lobby.name }}</h4>
+                                                <p class="text-xs text-gray-400">{{ lobby.leader ? lobby.leader.displayName : 'Unknown' }}</p>
+                                                
+                                                <!-- Mini avatares -->
+                                                <div class="flex gap-1 mt-2">
+                                                    {% set players = lobby.players.toArray %}
+                                                    {% for i in 0..2 %}
+                                                        {% set player = players[i] ?? null %}
+                                                        {% if player %}
+                                                            <img src="{{ player.user.steamAvatar ?: '/images/default-avatar.svg' }}" 
+                                                                 alt="Player" 
+                                                                 class="w-6 h-6 rounded-full border border-gray-500">
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                    {% if lobby.playerCount > 3 %}
+                                                        <div class="w-6 h-6 bg-gray-600 rounded-full border border-gray-500 flex items-center justify-center">
+                                                            <span class="text-xs text-white">+{{ lobby.playerCount - 3 }}</span>
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <div class="text-center py-8">
+                                        <i class="fas fa-trophy text-4xl text-gray-600 mb-4"></i>
+                                        <p class="text-gray-400 text-sm">Nenhuma lobby completa disponível para desafiar</p>
+                                    </div>
+                                {% endif %}
+                            {% else %}
+                                <!-- Quando não está em lobby completa ou não é líder -->
+                                <div class="text-center py-8">
+                                    <i class="fas fa-users text-4xl text-gray-600 mb-4"></i>
+                                    <p class="text-gray-400 text-sm text-center leading-relaxed">
+                                        {% if not isInFullLobby %}
+                                            Complete sua lobby com 5 jogadores para poder desafiar outras lobbies
+                                        {% else %}
+                                            Apenas o líder pode desafiar outras lobbies
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Modal de Criar Lobby -->
+    <div id="createLobbyModal" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden">
+        <div class="flex items-center justify-center min-h-full p-4">
+        <div class="bg-gray-800 rounded-xl p-8 w-full max-w-lg border border-gray-700 shadow-2xl transform transition-all">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-2xl font-bold text-white flex items-center">
+                    <i class="fas fa-plus-circle mr-3 text-orange-500"></i>
+                    Criar Nova Lobby
+                </h3>
+                <button onclick="lobbySystem.closeModals()" class="text-gray-400 hover:text-white transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="mb-6">
+                <label class="block text-gray-300 text-sm font-semibold mb-3" for="lobbyName">
+                    <i class="fas fa-tag mr-2"></i>Nome da Lobby
+                </label>
+                <input type="text" 
+                       id="lobbyName" 
+                       name="lobbyName"
+                       class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500 focus:ring-opacity-20 transition-all" 
+                       placeholder="Ex: Team {{ user.displayName }}, Noobs Welcome, Pro Players..."
+                       value="Team {{ user.displayName }}"
+                       maxlength="50">
+                <div class="flex items-center justify-between mt-2">
+                    <span class="text-xs text-gray-500">Escolha um nome criativo para sua lobby</span>
+                    <span id="charCount" class="text-xs text-gray-500">0/50</span>
+                </div>
+            </div>
+
+            <div class="bg-gray-900 rounded-lg p-4 mb-6">
+                <h4 class="text-sm font-semibold text-gray-300 mb-2 flex items-center">
+                    <i class="fas fa-info-circle mr-2 text-blue-500"></i>
+                    Informações da Lobby
+                </h4>
+                <ul class="text-xs text-gray-400 space-y-1">
+                    <li>• Você será o líder da lobby</li>
+                    <li>• Capacidade máxima: 5 jogadores</li>
+                    <li>• Lobby completa permite desafiar outras lobbies</li>
+                    <li>• Apenas o líder pode fechar a lobby</li>
+                </ul>
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                <button onclick="lobbySystem.closeModals()" 
+                        class="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold transition-colors flex items-center">
+                    <i class="fas fa-times mr-2"></i>
+                    Cancelar
+                </button>
+                <button onclick="lobbySystem.createLobby()" 
+                        class="px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg font-semibold transition-all flex items-center shadow-lg">
+                    <i class="fas fa-rocket mr-2"></i>
+                    Criar Lobby
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+    <script src="/js/lobby.js"></script>
+    <script>
+        // Debug adicional
+        console.log('Script carregado');
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM loaded');
+            
+            // Aguardar um pouco para garantir que tudo carregou
+            setTimeout(() => {
+                const btn = document.getElementById('createLobbyBtn');
+                console.log('Button found after timeout:', !!btn);
+                console.log('LobbySystem available:', !!window.lobbySystem);
+                
+                if (btn) {
+                    // Remover qualquer listener existente e adicionar novo
+                    btn.onclick = null;
+                    btn.removeEventListener('click', window.createLobbyClickHandler);
+                    
+                    window.createLobbyClickHandler = function(e) {
+                        console.log('Button clicked via new handler');
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        if (window.lobbySystem) {
+                            console.log('Calling showCreateModal');
+                            window.lobbySystem.showCreateModal();
+                        } else {
+                            console.error('lobbySystem not found');
+                        }
+                    };
+                    
+                    btn.addEventListener('click', window.createLobbyClickHandler);
+                    console.log('Event listener added successfully');
+                    
+                    // Teste adicional
+                    btn.style.border = '2px solid red';
+                    setTimeout(() => {
+                        btn.style.border = '';
+                    }, 2000);
+                }
+            }, 200);
+        });
+    </script>
+{% endblock %}

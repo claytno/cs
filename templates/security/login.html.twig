@@ -1,0 +1,56 @@
+{% extends 'public.html.twig' %}
+
+{% block title %}Log in!{% endblock %}
+
+{% block body %}
+    <div tabindex="-1" class="fixed top-0 left-0 right-0 flex p-4 overflow-x-hidden overflow-y-auto md:inset-0 max-h-full justify-center items-center">
+        <div class="relative w-full max-w-md max-h-full z-50">
+            <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
+                <div class="px-6 py-6 lg:px-8">
+                    <h3 class="mb-4 text-xl font-medium text-gray-900 dark:text-white">Iniciar Sesión</h3>
+                    {% if error %}
+                        <twig:Alert type="error" message="{{ error.messageKey|trans(error.messageData, 'security') }}" />
+                    {% endif %}
+                    <form class="space-y-6" method="POST">
+                        <div>
+                            <label for="username" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Email</label>
+                            <input type="email" value="{{ last_username }}" name="_username" id="username" placeholder="correo@proveedor.com" autocomplete="username" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white" required autofocus/>
+                        </div>
+                        <div>
+                            <label for="password" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Password</label>
+                            <input type="password" name="_password" id="password" placeholder="••••••••" autocomplete="current-password" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white" required />
+                        </div>
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+                        <div class="flex justify-between">
+                            <div class="flex items-start">
+                                <div class="flex items-center h-5">
+                                    <input id="_remember_me" type="checkbox" name="_remember_me" class="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-blue-300 dark:bg-gray-600 dark:border-gray-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800"/>
+                                </div>
+                                <label for="_remember_me" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Recordarme</label>
+                            </div>
+                            <a href="{{ path('app_forgot_password_request') }}" class="text-sm text-blue-700 hover:underline dark:text-blue-500">No recuerdas tu contraseña?</a>
+                        </div>
+                        <button type="submit" class="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Iniciar sesión</button>
+                        
+                        <div class="flex items-center justify-center py-3">
+                            <hr class="w-full border-gray-300 dark:border-gray-600">
+                            <span class="px-3 text-gray-500 dark:text-gray-400 text-sm">o</span>
+                            <hr class="w-full border-gray-300 dark:border-gray-600">
+                        </div>
+                        
+                        <a href="{{ path('app_steam_login') }}" class="w-full flex items-center justify-center px-4 py-2 bg-black hover:bg-gray-800 text-white font-medium rounded-lg text-sm transition-colors">
+                            <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.568 8.16c-.169-.224-.425-.301-.772-.301-.678 0-1.303.301-1.899.86-.567.528-1.233 1.278-1.856 2.175-.623-.897-1.289-1.647-1.856-2.175-.596-.559-1.221-.86-1.899-.86-.347 0-.603.077-.772.301-.147.196-.147.497 0 .693.567.756 1.275 1.647 2.070 2.573.397.463.816.926 1.233 1.346-.417.42-.836.883-1.233 1.346-.795.926-1.503 1.817-2.070 2.573-.147.196-.147.497 0 .693.169.224.425.301.772.301.678 0 1.303-.301 1.899-.86.567-.528 1.233-1.278 1.856-2.175.623.897 1.289 1.647 1.856 2.175.596.559 1.221.86 1.899.86.347 0 .603-.077.772-.301.147-.196.147-.497 0-.693-.567-.756-1.275-1.647-2.070-2.573-.397-.463-.816-.926-1.233-1.346.417-.42.836-.883 1.233-1.346.795-.926 1.503-1.817 2.070-2.573.147-.196.147-.497 0-.693z"/>
+                            </svg>
+                            Entrar com Steam
+                        </a>
+                        
+                        <div class="text-sm font-medium text-gray-500 dark:text-gray-300">
+                            No estas registrado? <a href="{{ path('app_register') }}" class="text-blue-700 hover:underline dark:text-blue-500">Crear cuenta</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>{% block title %}Bienvenido{% endblock %}</title>
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text><text y=%221.3em%22 x=%220.2em%22 font-size=%2276%22 fill=%22%23fff%22>sf</text></svg>">
+        {% block stylesheets %}
+        {% endblock %}
+
+        {% block javascripts %}
+            {% block importmap %}{{ importmap('app') }}{% endblock %}
+        {% endblock %}
+    </head>
+    <body style="background-image: url('{{ asset('images/bg.png') }}');" class="bg-no-repeat bg-cover bg-center min-w-dvw max-w-dvw min-h-dvh max-h-dvh flex gap-6 p-6 text-gray-900 dark:text-white">
+        {% if app.session.flashbag.peekAll() %}
+        <div class="absolute mx-auto left-0 right-0 max-w-md">
+            {% for label, messages in app.flashes %}
+                {% for message in messages %}
+            <twig:Alert type="{{ label }}" message="{{ message }}" />
+                {% endfor %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block container %}{% endblock %}
+    </body>
+</html>

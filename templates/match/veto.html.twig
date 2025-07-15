@@ -1,0 +1,348 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Veto de Mapas - {{ match.lobbyA.name }} vs {{ match.lobbyB.name }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .veto-container {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+        }
+        .map-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: #2c2f3b;
+            border: 2px solid transparent;
+        }
+        .map-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+            border-color: #3b82f6;
+        }
+        .map-card.banned {
+            opacity: 0.3;
+            cursor: not-allowed;
+            background: #1f1f1f;
+            border-color: #ef4444;
+        }
+        .map-card.banned:hover {
+            transform: none;
+            box-shadow: none;
+        }
+        .team-indicator {
+            background: linear-gradient(45deg, #3b82f6, #1d4ed8);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin: 0 auto;
+        }
+        .team-indicator.opponent {
+            background: linear-gradient(45deg, #ef4444, #dc2626);
+        }
+        .veto-history {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .turn-indicator {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="veto-container">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-white mb-4">VETO DE MAPAS</h1>
+            <div class="flex items-center justify-center gap-8 mb-6">
+                <div class="text-center">
+                    <div class="team-indicator">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mt-3">{{ match.lobbyA.name }}</h3>
+                    <p class="text-gray-400">{{ match.lobbyA.leader.displayName }}</p>
+                </div>
+                
+                <div class="text-6xl text-yellow-500">
+                    <i class="fas fa-sword"></i>
+                </div>
+                
+                <div class="text-center">
+                    <div class="team-indicator opponent">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mt-3">{{ match.lobbyB.name }}</h3>
+                    <p class="text-gray-400">{{ match.lobbyB.leader.displayName }}</p>
+                </div>
+            </div>
+            
+            <!-- Status da vez -->
+            <div class="text-center">
+                {% if isUserCaptain %}
+                    {% if isUserTurn %}
+                        <div class="bg-green-900 border-2 border-green-500 rounded-lg p-4 mb-4 turn-indicator">
+                            <h3 class="text-green-300 font-bold text-lg">
+                                <i class="fas fa-crosshairs mr-2"></i>SUA VEZ DE BANIR!
+                            </h3>
+                            <p class="text-green-100">Selecione um mapa para banir</p>
+                        </div>
+                    {% else %}
+                        <div class="bg-yellow-900 border-2 border-yellow-500 rounded-lg p-4 mb-4">
+                            <h3 class="text-yellow-300 font-bold text-lg">
+                                <i class="fas fa-clock mr-2"></i>AGUARDANDO OPONENTE
+                            </h3>
+                            <p class="text-yellow-100">Vez da equipe adversária banir</p>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="bg-blue-900 border-2 border-blue-500 rounded-lg p-4 mb-4">
+                        <h3 class="text-blue-300 font-bold text-lg">
+                            <i class="fas fa-eye mr-2"></i>MODO ESPECTADOR
+                        </h3>
+                        <p class="text-blue-100">Apenas o capitão pode vetar mapas</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <!-- Mapas Disponíveis -->
+            <div class="lg:col-span-3">
+                <h2 class="text-2xl font-bold text-white mb-6">
+                    <i class="fas fa-map mr-2"></i>MAPAS DISPONÍVEIS
+                </h2>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {% set allMaps = [
+                        'de_mirage',
+                        'de_inferno', 
+                        'de_cache',
+                        'de_overpass',
+                        'de_train',
+                        'de_nuke',
+                        'de_dust2'
+                    ] %}
+                    
+                    {% for mapName in allMaps %}
+                        {% set isBanned = mapName not in availableMaps %}
+                        <div class="map-card {{ isBanned ? 'banned' : '' }} rounded-lg overflow-hidden"
+                             {% if not isBanned and isUserCaptain and isUserTurn %}
+                                onclick="vetoSystem.banMap('{{ mapName }}')"
+                             {% endif %}>
+                            <div class="relative">
+                                <img src="/images/maps/{{ mapName }}.jpg" 
+                                     alt="{{ mapName }}" 
+                                     class="w-full h-32 object-cover"
+                                     onerror="this.src='/images/maps/default.jpg'">
+                                
+                                {% if isBanned %}
+                                    <div class="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center">
+                                        <div class="text-center">
+                                            <i class="fas fa-ban text-red-500 text-3xl mb-2"></i>
+                                            <p class="text-red-300 font-bold">BANIDO</p>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="p-4">
+                                <h3 class="font-bold text-white text-center">
+                                    {{ mapName|replace({'de_': ''})|title }}
+                                </h3>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Histórico de Vetos -->
+            <div class="lg:col-span-1">
+                <div class="veto-history rounded-lg p-6">
+                    <h3 class="text-xl font-bold text-white mb-4">
+                        <i class="fas fa-history mr-2"></i>HISTÓRICO
+                    </h3>
+                    
+                    <div class="space-y-3">
+                        {% for veto in vetos %}
+                            <div class="bg-gray-800 rounded-lg p-3">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm font-bold text-gray-300">Round {{ veto.round }}</span>
+                                    <span class="text-xs bg-red-600 text-white px-2 py-1 rounded">BAN</span>
+                                </div>
+                                <div class="text-sm">
+                                    <p class="text-white font-semibold">{{ veto.lobby.name }}</p>
+                                    <p class="text-gray-400">baniu {{ veto.mapName|replace({'de_': ''})|title }}</p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                        
+                        <!-- Placeholder para próximos rounds -->
+                        {% for i in (vetos|length + 1)..6 %}
+                            <div class="bg-gray-900 rounded-lg p-3 opacity-50">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm text-gray-500">Round {{ i }}</span>
+                                    <span class="text-xs bg-gray-600 text-gray-400 px-2 py-1 rounded">---</span>
+                                </div>
+                                <div class="text-sm text-gray-500">
+                                    <p>Aguardando...</p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                    {% if availableMaps|length == 1 %}
+                        <div class="mt-6 bg-green-900 rounded-lg p-4">
+                            <h4 class="text-green-300 font-bold mb-2">
+                                <i class="fas fa-trophy mr-2"></i>MAPA FINAL
+                            </h4>
+                            <p class="text-green-100 font-semibold">
+                                {{ availableMaps[0]|replace({'de_': ''})|title }}
+                            </p>
+                            <p class="text-green-200 text-sm mt-2">
+                                Redirecionando para o servidor...
+                            </p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        class VetoSystem {
+            constructor() {
+                this.pollInterval = null;
+                this.init();
+            }
+
+            init() {
+                this.startStatusPolling();
+            }
+
+            async banMap(mapName) {
+                if (!confirm(`Tem certeza que deseja banir ${mapName.replace('de_', '').toUpperCase()}?`)) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/match/veto/ban', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: `map=${encodeURIComponent(mapName)}`
+                    });
+
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.showNotification(data.message, 'success');
+                        
+                        if (data.redirect) {
+                            setTimeout(() => {
+                                window.location.href = data.redirect;
+                            }, 2000);
+                        } else {
+                            // Recarregar a página para atualizar o estado
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1500);
+                        }
+                    } else {
+                        this.showNotification(data.error, 'error');
+                    }
+                } catch (error) {
+                    this.showNotification('Erro ao banir mapa!', 'error');
+                    console.error('Erro:', error);
+                }
+            }
+
+            startStatusPolling() {
+                // Verificar status da partida a cada 2 segundos
+                this.pollInterval = setInterval(async () => {
+                    try {
+                        const response = await fetch('/match/status');
+                        const data = await response.json();
+                        
+                        if (data.stage === 'connect') {
+                            window.location.href = '/match/connect';
+                        } else if (data.stage !== 'veto') {
+                            window.location.href = '/lobby';
+                        }
+                    } catch (error) {
+                        console.log('Erro ao verificar status:', error);
+                    }
+                }, 2000);
+            }
+
+            showNotification(message, type = 'info') {
+                // Sistema simples de notificação
+                const notification = document.createElement('div');
+                notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg text-white font-semibold transition-all transform translate-x-full`;
+                
+                switch (type) {
+                    case 'success':
+                        notification.classList.add('bg-green-600');
+                        break;
+                    case 'error':
+                        notification.classList.add('bg-red-600');
+                        break;
+                    default:
+                        notification.classList.add('bg-blue-600');
+                }
+                
+                notification.textContent = message;
+                document.body.appendChild(notification);
+                
+                // Animar entrada
+                setTimeout(() => {
+                    notification.classList.remove('translate-x-full');
+                }, 100);
+                
+                // Remover após 3 segundos
+                setTimeout(() => {
+                    notification.classList.add('translate-x-full');
+                    setTimeout(() => {
+                        notification.remove();
+                    }, 300);
+                }, 3000);
+            }
+
+            destroy() {
+                if (this.pollInterval) {
+                    clearInterval(this.pollInterval);
+                }
+            }
+        }
+
+        // Inicializar sistema de veto
+        let vetoSystem;
+        document.addEventListener('DOMContentLoaded', () => {
+            vetoSystem = new VetoSystem();
+            window.vetoSystem = vetoSystem;
+        });
+
+        // Cleanup
+        window.addEventListener('beforeunload', () => {
+            if (vetoSystem) {
+                vetoSystem.destroy();
+            }
+        });
+    </script>
+{% endblock %}
